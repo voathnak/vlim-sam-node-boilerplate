@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  vlim-sam-node-boilerplate is Boilerplate of AWS SAM Using NodeJs 12.x
+
+  Sample SAM Template for vlim-sam-node-boilerplate
+
+
+
+Globals:
+  Function:
+    Timeout: 60
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'content-type, Authorization'"
+      AllowOrigin: "'*'"
+      AllowCredentials: "'*'"
+
+
+
+Parameters:
+  DeploymentS3BucketName:
+    Type: String
+    Description: The name of the S3 bucket in which the Swagger specification is stored
+  StageName:
+    Type: String
+    Description: The name of the stage, e.g. "dev", "preprod", "prod"
+    Default: devii
+  AppName:
+    Type: String
+    Description: The name of the APP
+    Default: vlim-sam-node-boilerplate
+  TodoTableName:
+    Type: String
+    Default: 'TodoTable'
+    Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z]+$
+    ConstraintDescription: 'Required parameter. Must be characters only. No numbers allowed.'
+  UserTableName:
+    Type: String
+    Default: 'UserTable'
+    Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z]+$
+    ConstraintDescription: 'Required parameter. Must be characters only. No numbers allowed.'
+
+
+
+Resources:
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Sub: ${AppName}-${StageName}-api-gateway
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: '/*' # allows for logging on any resource
+          HttpMethod: '*' # allows for logging on any method
+      StageName:
+        Ref: StageName
+
+
+
+#  HelloWorldFunction:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      FunctionName:
+#        Fn::Sub: ${AppName}-${StageName}-HelloWorld
+#      CodeUri: hello_world/
+#      Handler: app.lambda_handler
+#      Runtime: nodejs12.x
+#      Events:
+#        HelloWorld:
+#          Type: Api
+#          Properties:
+#            RestApiId:
+#              Ref: RestApi
+#            Path: /hello
+#            Method: get
+#            Auth:
+#              Authorizer: NONE
+#      Layers:
+#        - !Ref NodeDependencies
+
+
+  createTodoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${AppName}-${StageName}-createTodo
+      CodeUri: todos/
+      Handler: create.createTodoHandler
+      Runtime: nodejs12.x
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+      Environment:
+        Variables:
+          DYNAMODB_TODO_TABLE: !Sub "${AppName}-${StageName}-${TodoTableName}"
+      Events:
+        createTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos
+            Method: post
+      Layers:
+        - !Ref NodeDependencies
+#        - !Ref CoreLibs
+
+
+  listTodoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${AppName}-${StageName}-listTodo
+      CodeUri: todos/
+      Handler: list.getAllTodosHandler
+      Runtime: nodejs12.x
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+      Environment:
+        Variables:
+          DYNAMODB_TODO_TABLE: !Sub "${AppName}-${StageName}-${TodoTableName}"
+      Events:
+        listTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos
+            Method: get
+      Layers:
+        - !Ref NodeDependencies
+#        - !Ref CoreLibs
+
+
+#  getTodoFunction:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      FunctionName:
+#        Fn::Sub: ${AppName}-${StageName}-getTodo
+#      CodeUri: todos/
+#      Handler: get.get
+#      Runtime: nodejs12.x
+#      Policies:
+#        - DynamoDBCrudPolicy:
+#            TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Environment:
+#        Variables:
+#          DYNAMODB_TABLE: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Events:
+#        getTodo:
+#          Type: Api
+#          Properties:
+#            RestApiId:
+#              Ref: RestApi
+#            Path: /todos/{itemId}
+#            Method: get
+#      Layers:
+#        - !Ref NodeDependencies
+##        - !Ref CoreLibs
+#
+#
+#  updateTodoFunction:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      FunctionName:
+#        Fn::Sub: ${AppName}-${StageName}-updateTodo
+#      CodeUri: todos/
+#      Handler: update.update
+#      Runtime: nodejs12.x
+#      Policies:
+#        - DynamoDBCrudPolicy:
+#            TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Environment:
+#        Variables:
+#          DYNAMODB_TABLE: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Events:
+#        updateTodo:
+#          Type: Api
+#          Properties:
+#            RestApiId:
+#              Ref: RestApi
+#            Path: /todos/{itemId}
+#            Method: put
+#      Layers:
+#        - !Ref NodeDependencies
+##        - !Ref CoreLibs
+#
+#
+#  deleteTodoFunction:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      FunctionName:
+#        Fn::Sub: ${AppName}-${StageName}-deleteTodo
+#      CodeUri: todos/
+#      Handler: delete.delete
+#      Runtime: nodejs12.x
+#      Policies:
+#        - DynamoDBCrudPolicy:
+#            TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Environment:
+#        Variables:
+#          DYNAMODB_TABLE: !Sub "${AppName}-${StageName}-${TodoTableName}"
+#      Events:
+#        deleteTodo:
+#          Type: Api
+#          Properties:
+#            RestApiId:
+#              Ref: RestApi
+#            Path: /todos/{itemId}
+#            Method: delete
+#      Layers:
+#        - !Ref NodeDependencies
+##        - !Ref CoreLibs
+#
+#
+
+#  CoreLibs:
+#    Type: 'AWS::Serverless::LayerVersion'
+#    Properties:
+#      ContentUri: core
+#      CompatibleRuntimes: # optional
+#        - nodejs12.x
+
+
+
+  NodeDependencies:
+    Type: 'AWS::Serverless::LayerVersion'
+    Properties:
+      ContentUri: dependencies/
+      CompatibleRuntimes: # optional
+        - nodejs12.x
+
+
+
+  TodosDynamoDbTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub "${AppName}-${StageName}-${TodoTableName}"
+      AttributeDefinitions:
+        - AttributeName: itemId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: itemId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+
+
+Outputs:
+  ApiURL:
+    Description: "API URL"
+    Value: !Sub 'https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/'
+#  HelloWorldApi:
+#    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/hello/"
+#  HelloWorldFunction:
+#    Description: "Hello World Lambda Function ARN"
+#    Value: !GetAtt HelloWorldFunction.Arn
+#  HelloWorldFunctionIamRole:
+#    Description: "Implicit IAM Role created for Hello World function"
+#    Value: !GetAtt HelloWorldFunctionRole.Arn
