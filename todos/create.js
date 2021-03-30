@@ -1,4 +1,5 @@
 const dynamodb = require('aws-sdk/clients/dynamodb');
+const { httpOk } = require('utils/helpers');
 
 const docClient = new dynamodb.DocumentClient();
 
@@ -24,12 +25,5 @@ exports.createTodo = async (event) => {
 
   const result = await docClient.put(params).promise();
 
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify(result),
-  };
-
-  console.info('result:', result);
-  //
-  return response;
+  return httpOk(result);
 };

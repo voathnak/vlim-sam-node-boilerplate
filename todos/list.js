@@ -1,6 +1,7 @@
 const tableName = process.env.DYNAMODB_TODO_TABLE;
 
 const dynamodb = require('aws-sdk/clients/dynamodb');
+const { httpOk } = require('utils/helpers');
 
 const docClient = new dynamodb.DocumentClient();
 
@@ -18,8 +19,5 @@ exports.getAllTodos = async (event) => {
   const data = await docClient.scan(params).promise();
   const items = data.Items;
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify(items),
-  };
+  return httpOk(items);
 };
