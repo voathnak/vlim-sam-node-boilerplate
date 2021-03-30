@@ -69,8 +69,8 @@ Resources:
     Properties:
       FunctionName:
         Fn::Sub: ${AppName}-${StageName}-listTodo
-      CodeUri: s3://vlim-sam-node-boilerplate-dev-bucket/0c252c3729e84d7668195702d57c210b
-      Handler: list.getAllTodosHandler
+      CodeUri: s3://vlim-sam-node-boilerplate-dev-bucket/9c0b722acc5fad1e0f70862d0014db0d
+      Handler: handler.lambdaHandler
       Runtime: nodejs12.x
       Policies:
       - DynamoDBCrudPolicy:
@@ -94,7 +94,7 @@ Resources:
             RestApiId:
               Ref: RestApi
             Path: /todos
-            Method: PUT
+            Method: POST
         readTodo:
           Type: Api
           Properties:
@@ -134,7 +134,8 @@ Resources:
   ApiGatewayAccount:
     Type: AWS::ApiGateway::Account
     Properties:
-      CloudWatchRoleArn: arn:aws:iam::661275851074:role/vlim-APIGateway-push-to-cloud-watch
+      CloudWatchRoleArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/vlim-APIGateway-push-to-cloud-watch
   Deployment:
     Type: AWS::ApiGateway::Deployment
     Properties:

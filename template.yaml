@@ -139,7 +139,7 @@ Resources:
   ApiGatewayAccount:
     Type: 'AWS::ApiGateway::Account'
     Properties:
-      CloudWatchRoleArn: arn:aws:iam::661275851074:role/vlim-APIGateway-push-to-cloud-watch
+      CloudWatchRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/vlim-APIGateway-push-to-cloud-watch'
 
   Deployment:
     Type: 'AWS::ApiGateway::Deployment'
