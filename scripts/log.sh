@@ -7,4 +7,4 @@ else
 fi
 
 source scripts/config.sh
-sam logs --profile "$PROFILE" -n $1 --stack-name "$STACK_NAME" --region "$REGION" --tail
+sam logs --profile "$PROFILE" -n "$1" --stack-name "$STACK_NAME" --region "$REGION" --tail

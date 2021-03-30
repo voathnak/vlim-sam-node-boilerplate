@@ -6,14 +6,15 @@ Description: 'vlim-sam-node-boilerplate is Boilerplate of AWS SAM Using NodeJs 1
 
   '
 Globals:
-  Function:
-    Timeout: 60
   Api:
     Cors:
-      AllowMethods: '''GET,POST,OPTIONS'''
-      AllowHeaders: '''content-type, Authorization'''
       AllowOrigin: '''*'''
-      AllowCredentials: '''*'''
+      AllowMethods: '''*'''
+      AllowHeaders: '''*'''
+  Function:
+    Timeout: 90
+    Runtime: nodejs12.x
+    MemorySize: 128
 Parameters:
   DeploymentS3BucketName:
     Type: String
@@ -58,38 +59,17 @@ Resources:
         HttpMethod: '*'
       StageName:
         Ref: StageName
-  createTodoFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName:
-        Fn::Sub: ${AppName}-${StageName}-createTodo
-      CodeUri: s3://vlim-sam-node-boilerplate-devii-bucket/242dc63027ba389e514c3c33417ce137
-      Handler: create.lambda_handler
-      Runtime: nodejs12.x
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Fn::Sub: ${AppName}-${StageName}-${TodoTableName}
-      Environment:
-        Variables:
-          DYNAMODB_TODO_TABLE:
-            Fn::Sub: ${AppName}-${StageName}-${TodoTableName}
-      Events:
-        createTodo:
-          Type: Api
-          Properties:
-            RestApiId:
-              Ref: RestApi
-            Path: /todos
-            Method: post
-      Layers:
-      - Ref: NodeDependencies
+      Cors:
+        AllowMethods: '''POST, GET, PUT, PATCH, DELETE, OPTIONS'''
+        AllowHeaders: '''Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token,
+          X-Forwarded-For'''
+        AllowOrigin: '''*'''
   listTodoFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName:
         Fn::Sub: ${AppName}-${StageName}-listTodo
-      CodeUri: s3://vlim-sam-node-boilerplate-devii-bucket/242dc63027ba389e514c3c33417ce137
+      CodeUri: s3://vlim-sam-node-boilerplate-dev-bucket/0c252c3729e84d7668195702d57c210b
       Handler: list.getAllTodosHandler
       Runtime: nodejs12.x
       Policies:
@@ -107,15 +87,63 @@ Resources:
             RestApiId:
               Ref: RestApi
             Path: /todos
-            Method: get
+            Method: GET
+        createTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos
+            Method: PUT
+        readTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos/{itemId}
+            Method: GET
+        updateTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos/{itemId}
+            Method: PATCH
+        deleteTodo:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            Path: /todos/{itemId}
+            Method: DELETE
       Layers:
       - Ref: NodeDependencies
+      - Ref: CoreLibs
+  CoreLibs:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: s3://vlim-sam-node-boilerplate-dev-bucket/12dd600be09f544fdb04cd0fba2d98c2
+      CompatibleRuntimes:
+      - nodejs12.x
   NodeDependencies:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: s3://vlim-sam-node-boilerplate-devii-bucket/fb037f81c014d0de057e1251e8546b15
+      ContentUri: s3://vlim-sam-node-boilerplate-dev-bucket/c7e19fbb45a9cfe94b707ad11a7443bf
       CompatibleRuntimes:
       - nodejs12.x
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: arn:aws:iam::661275851074:role/vlim-APIGateway-push-to-cloud-watch
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: RestApi
+      Description: My ApiGateway deployment
+      StageDescription:
+        LoggingLevel: INFO
+      StageName: Prod
   TodosDynamoDbTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -131,7 +159,11 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
 Outputs:
-  ApiURL:
+  WebEndpoint:
     Description: API URL
     Value:
       Fn::Sub: https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/
+  RestApiId:
+    Description: API Gateway ID
+    Value:
+      Ref: RestApi

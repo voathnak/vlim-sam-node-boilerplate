@@ -2,10 +2,20 @@
 
 source scripts/config.sh
 rm -rf .aws-sam
-#cp -r snail layer/core/python
-#cp -r models layer/core/python
-#cp -r snippets layer/core/python
-#sam build && \
-#sam local start-api --region "$REGION" --profile "$PROFILE"
-sam local start-api --region "$REGION" --profile "$PROFILE" --skip-pull-image
-#sam local start-api --region "$REGION" --profile "$PROFILE"  --skip-pull-image --debug-port 5890
+
+# Preparing layer
+sh scripts/layer-preparation.sh
+
+
+# Run in local
+sam local start-api \
+  --port 4000 \
+  --region "$REGION" \
+  --profile "$PROFILE" \
+  --parameter-overrides \
+    StageName="$STAGE_NAME" \
+    DeploymentS3BucketName="$S3_BUCKET" \
+    AppName="$APP_NAME" \
+  --skip-pull-image \
+  2>&1 | tr "\r" "\n"
+

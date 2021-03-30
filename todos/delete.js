@@ -4,12 +4,8 @@ const dynamodb = require('aws-sdk/clients/dynamodb');
 
 const docClient = new dynamodb.DocumentClient();
 
-exports.getAllTodos = async (event) => {
-  if (event.httpMethod !== 'GET') {
-    throw new Error(`getAllItems only accept GET method, you tried: ${event.httpMethod}`);
-  }
+exports.deleteTodo = async (event) => {
   console.info('received:', event);
-  console.info('TableName:', tableName);
 
   const params = {
     TableName: tableName,
@@ -18,8 +14,11 @@ exports.getAllTodos = async (event) => {
   const data = await docClient.scan(params).promise();
   const items = data.Items;
 
-  return {
+  const response = {
     statusCode: 200,
     body: JSON.stringify(items),
   };
+
+  console.info(`response from: ${event.path} statusCode: ${response.statusCode} body: ${response.body}`);
+  return response;
 };
